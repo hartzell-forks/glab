@@ -99,6 +99,14 @@ func NewCmdUpdate(f *cmdutils.Factory) *cobra.Command {
 				actions = append(actions, "made confidential")
 				l.Confidential = gitlab.Bool(true)
 			}
+			if ok := cmd.Flags().Changed("weight"); ok {
+				m, _ := cmd.Flags().GetInt("weight")
+				if m < 0 {
+					return &cmdutils.FlagError{Err: fmt.Errorf("--weight must be non-negative, not %d", m)}
+				}
+				actions = append(actions, fmt.Sprintf("set weight to %d", m))
+				l.Weight = gitlab.Int(m)
+			}
 			if ok := cmd.Flags().Changed("milestone"); ok {
 				if m, _ := cmd.Flags().GetString("milestone"); m != "" || m == "0" {
 					mID, err := cmdutils.ParseMilestone(apiClient, repo, m)
@@ -162,6 +170,7 @@ func NewCmdUpdate(f *cmdutils.Factory) *cobra.Command {
 	issueUpdateCmd.Flags().StringP("milestone", "m", "", "title of the milestone to assign, pass \"\" or 0 to unassign")
 	issueUpdateCmd.Flags().StringSliceP("assignee", "a", []string{}, "assign users via username, prefix with '!' or '-' to remove from existing assignees, '+' to add, otherwise replace existing assignees with given users")
 	issueUpdateCmd.Flags().Bool("unassign", false, "unassign all users")
+	issueUpdateCmd.Flags().Int("weight", 0, "Set issue weight (use 0 to unset)")
 
 	return issueUpdateCmd
 }
